@@ -7,6 +7,7 @@ var bodyParser = require('body-parser');
 const db = require('./config/database');
 db.connect();
 
+const Place = require('./models/Place');
 
 var index = require('./routes/index');
 var users = require('./routes/users');
@@ -19,6 +20,71 @@ app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
+
+
+app.post("/places", (req, res) => {
+  Place.create({
+    title: req.body.title,
+    description: req.body.description,
+    acceptsCreditCard: req.body.acceptsCreditCard,
+    openHour: req.body.openHour,
+    closeHour: req.body.closeHour
+  }).then(doc=>{
+    res.json(doc);
+  }).catch(err => {
+    console.log(err);
+    res.json(err);
+  })
+});
+
+app.get("/places", (req, res) => {
+  Place.find({})
+  .then(docs => {
+    res.json(docs);
+  }).catch(err => {
+    console.log(err);
+    res.json(err);
+  });
+});
+
+app.get("/places/:id", (req, res) => {
+  Place.findById(req.params.id)
+  .then(doc => {
+    res.json(doc);
+  }).catch(err => {
+    console.log(err);
+    res.json(err);
+  });
+});
+
+app.put("/places/:id", (req, res) => {
+  let attributes = ["title", "description", "acceptsCreditCard", "openHour", "closeHour"];
+  let placeParams = {};
+
+  attributes.forEach(attr => {
+    if(Object.prototype.hasOwnProperty.call(req.body, attr)){
+      placeParams[attr] = req.body[attr];
+    }
+  });
+
+  Place.findByIdAndUpdate(req.params.id, placeParams, {new: true})
+  .then(doc => {
+    res.json(doc);
+  }).catch(err => {
+    console.log(err);
+    res.json(err);
+  });
+});
+
+app.delete("/places/:id", (req, res) => {
+  Place.findByIdAndRemove(req.params.id)
+  .then(doc => {
+    res.json(doc);
+  }).catch(err => {
+    console.log(err);
+    res.json(err);
+  });
+});
 
 app.use('/', index);
 app.use('/users', users);

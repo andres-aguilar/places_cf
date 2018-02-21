@@ -1,13 +1,19 @@
 const Place = require('../models/Place');
 
-function index(req, res) {
-  Place.paginate({}, { page: req.query.page || 1, limit: 1, sort: {"_id": -1}})
-  .then(docs => {
-    res.json(docs);
-  }).catch(err => {
-    console.log(err);
-    res.json(err);
+
+function find(req, res, next) {
+  Place.findById(req.params.id)
+  .then(place => {
+    req.place = place;
+    next();
+  })
+  .catch(err => {
+    next(err);
   });
+}
+
+function index(req, res) {
+  res.json(req.place);
 }
 
 function show(req, res) {
@@ -44,7 +50,9 @@ function update(req, res) {
     }
   });
 
-  Place.findByIdAndUpdate(req.params.id, placeParams, {new: true}).then(doc => {
+  req.place = Object.assign(req.place, placeParams);
+
+  req.place.save().then(doc => {
     res.json(doc);
   }).catch(err => {
     console.log(err);
@@ -53,7 +61,7 @@ function update(req, res) {
 }
 
 function destroy(req, res) {
-  Place.findByIdAndRemove(req.params.id).then(doc => {
+  req.place.remove().then(doc => {
     res.json(doc);
   }).catch(err => {
     console.log(err);
@@ -61,4 +69,4 @@ function destroy(req, res) {
   });
 }
 
-module.exports = {index, show, update, create, destroy};
+module.exports = {index, show, update, create, destroy, find};
